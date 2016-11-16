@@ -1,0 +1,17 @@
+syntax = "proto3";
+package example;
+
+message InputMessage {
+    string value = 1;
+}
+
+message OutputMessage {
+    string value = 1;
+}
+
+service ExampleService {
+    rpc Echo(InputMessage) returns (OutputMessage) {}
+    rpc EchoStreamOut(InputMessage) returns (stream OutputMessage) {}
+    rpc EchoStreamIn(stream InputMessage) returns (OutputMessage) {}
+    rpc EchoStreamInOut(stream InputMessage) returns (stream OutputMessage) {}
+}
