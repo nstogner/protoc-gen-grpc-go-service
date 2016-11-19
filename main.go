@@ -41,47 +41,55 @@ func decodeRequest(r io.Reader) *plugin.CodeGeneratorRequest {
 }
 
 // parseRequest wrangles the request to fit needs of the template.
-func parseRequest(req *plugin.CodeGeneratorRequest) params {
-	pf := req.GetProtoFile()[0]
-	ps := params{
-		ServiceDescriptorProto: *pf.GetService()[0],
-		PackageName:            pf.GetPackage(),
-		ProtoName:              pf.GetName(),
-	}
+func parseRequest(req *plugin.CodeGeneratorRequest) []params {
+	var ps []params
+	for _, pf := range req.GetProtoFile() {
+		for _, svc := range pf.GetService() {
+			p := params{
+				ServiceDescriptorProto: *svc,
+				PackageName:            pf.GetPackage(),
+				ProtoName:              pf.GetName(),
+			}
 
-	for _, mtd := range ps.ServiceDescriptorProto.GetMethod() {
-		m := method{
-			MethodDescriptorProto: *mtd,
-			serviceName:           ps.ServiceDescriptorProto.GetName(),
+			for _, mtd := range p.ServiceDescriptorProto.GetMethod() {
+				m := method{
+					MethodDescriptorProto: *mtd,
+					serviceName:           p.ServiceDescriptorProto.GetName(),
+				}
+				p.Methods = append(p.Methods, m)
+			}
+
+			ps = append(ps, p)
 		}
-		ps.Methods = append(ps.Methods, m)
+
 	}
 	return ps
 }
 
 // generateResponse executes the template.
-func generateResponse(ps params) *plugin.CodeGeneratorResponse {
-	w := &bytes.Buffer{}
-	if err := tmpl.Execute(w, ps); err != nil {
-		log.WithErr(err).Fatal("unable to execute template")
+func generateResponse(ps []params) *plugin.CodeGeneratorResponse {
+	var resp plugin.CodeGeneratorResponse
+
+	for _, p := range ps {
+		w := &bytes.Buffer{}
+		if err := tmpl.Execute(w, p); err != nil {
+			log.WithErr(err).Fatal("unable to execute template")
+		}
+
+		fmted, err := format.Source([]byte(w.String()))
+		if err != nil {
+			log.WithErr(err).Fatal("unable to go-fmt output")
+		}
+
+		fileName := strings.ToLower(p.GetName()) + ".go"
+		fileContent := string(fmted)
+		resp.File = append(resp.File, &plugin.CodeGeneratorResponse_File{
+			Name:    &fileName,
+			Content: &fileContent,
+		})
 	}
 
-	fmted, err := format.Source([]byte(w.String()))
-	if err != nil {
-		log.WithErr(err).Fatal("unable to go-fmt output")
-	}
-
-	fileName := "service.go"
-	fileContent := string(fmted)
-
-	return &plugin.CodeGeneratorResponse{
-		File: []*plugin.CodeGeneratorResponse_File{
-			{
-				Name:    &fileName,
-				Content: &fileContent,
-			},
-		},
-	}
+	return &resp
 }
 
 // encodeResponse marshals the protobuf response.
@@ -102,6 +110,7 @@ type params struct {
 	ProtoName   string
 	PackageName string
 	Methods     []method
+	fileName    string
 }
 
 type method struct {
