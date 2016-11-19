@@ -135,7 +135,11 @@ var tmpl = template.Must(template.New("server").Parse(`
 
 package main
 
-import "golang.org/x/net/context"
+import (
+	"io"
+
+	"golang.org/x/net/context"
+)
 
 type service struct{}
 
