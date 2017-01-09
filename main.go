@@ -6,6 +6,7 @@ import (
 	"go/format"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 	"text/template"
@@ -13,7 +14,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
-	"github.com/nstogner/kit/log"
 )
 
 func main() {
@@ -32,10 +32,10 @@ func decodeRequest(r io.Reader) *plugin.CodeGeneratorRequest {
 	var req plugin.CodeGeneratorRequest
 	input, err := ioutil.ReadAll(r)
 	if err != nil {
-		log.WithErr(err).Fatal("unable to read stdin")
+		log.Fatal("unable to read stdin: " + err.Error())
 	}
 	if err := proto.Unmarshal(input, &req); err != nil {
-		log.WithErr(err).Fatal("unable to marshal stdin as protobuf")
+		log.Fatal("unable to marshal stdin as protobuf: " + err.Error())
 	}
 	return &req
 }
@@ -73,12 +73,12 @@ func generateResponse(ps []params) *plugin.CodeGeneratorResponse {
 	for _, p := range ps {
 		w := &bytes.Buffer{}
 		if err := tmpl.Execute(w, p); err != nil {
-			log.WithErr(err).Fatal("unable to execute template")
+			log.Fatal("unable to execute template: " + err.Error())
 		}
 
 		fmted, err := format.Source([]byte(w.String()))
 		if err != nil {
-			log.WithErr(err).Fatal("unable to go-fmt output")
+			log.Fatal("unable to go-fmt output: " + err.Error())
 		}
 
 		fileName := strings.ToLower(p.GetName()) + ".go"
@@ -96,11 +96,11 @@ func generateResponse(ps []params) *plugin.CodeGeneratorResponse {
 func encodeResponse(resp *plugin.CodeGeneratorResponse, w io.Writer) {
 	outBytes, err := proto.Marshal(resp)
 	if err != nil {
-		log.WithErr(err).Fatal("unable to marshal response to protobuf")
+		log.Fatal("unable to marshal response to protobuf: " + err.Error())
 	}
 
 	if _, err := w.Write(outBytes); err != nil {
-		log.WithErr(err).Fatal("unable to write protobuf to stdout")
+		log.Fatal("unable to write protobuf to stdout: " + err.Error())
 	}
 }
 
