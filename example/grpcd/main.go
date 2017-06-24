@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/nstogner/protoc-gen-grpc-goservice/example"
+	"github.com/nstogner/protoc-gen-grpc-go-service/example"
 
 	"google.golang.org/grpc"
 )
