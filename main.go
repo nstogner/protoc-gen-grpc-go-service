@@ -81,7 +81,7 @@ func generateResponse(ps []params) *plugin.CodeGeneratorResponse {
 			log.Fatal("unable to go-fmt output: " + err.Error())
 		}
 
-		fileName := strings.ToLower(p.GetName()) + ".go"
+		fileName := "service.go"
 		fileContent := string(fmted)
 		resp.File = append(resp.File, &plugin.CodeGeneratorResponse_File{
 			Name:    &fileName,

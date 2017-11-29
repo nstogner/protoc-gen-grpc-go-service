@@ -6,7 +6,6 @@ package main
 import (
 	"io"
 
-	"github.com/nstogner/protoc-gen-grpc-go-service/example"
 	"golang.org/x/net/context"
 )
 
